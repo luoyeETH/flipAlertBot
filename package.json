@@ -1,0 +1,22 @@
+{
+  "name": "flip-alert-bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@alch/alchemy-web3": "^1.4.6",
+    "@opensea/stream-js": "^0.0.20",
+    "axios": "^0.27.2",
+    "discord-webhook-node": "^1.1.8",
+    "moment": "^2.29.4",
+    "web3": "^1.7.3",
+    "ws": "^8.6.0"
+  }
+}
