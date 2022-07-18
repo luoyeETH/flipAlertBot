@@ -98,7 +98,7 @@ const osSellEvent = async (slug) => {
         console.log(`${i+1} ${newLastFivePriceList[i]}`)
       }
 
-      let avgPrice = (sum / newLastFivePriceList.length).toFixed(4)
+      let avgPrice = (sum / 3).toFixed(4)
       console.log(`\x1b[32m%s\x1b[0m`, `Avg: ${avgPrice}ETH`)
       // 判断均价是否超过预定值 
       let now = await getDate()
