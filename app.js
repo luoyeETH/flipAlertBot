@@ -86,14 +86,19 @@ const osSellEvent = async (slug) => {
     if (lastFivePriceList.length > 5) {
       lastFivePriceList.shift()
     }
-    let sum = 0
-    for (let i = 0; i < lastFivePriceList.length; i++) {
-      sum += lastFivePriceList[i]
-      console.log(`${i+1} ${lastFivePriceList[i]}`)
-    }
-    // 计算平均价格 精确到四位小数
+    
+    // 去除最高价计算平均价格 精确到四位小数
     if (lastFivePriceList.length == 5) {
-      let avgPrice = (sum / lastFivePriceList.length).toFixed(4)
+      let newLastFivePriceList = lastFivePriceList.slice(0)
+      newLastFivePriceList.sort(function(a, b){return a-b})
+
+      let sum = 0
+      for (let i = 0; i < 3; i++) {
+        sum += newLastFivePriceList[i]
+        console.log(`${i+1} ${newLastFivePriceList[i]}`)
+      }
+
+      let avgPrice = (sum / newLastFivePriceList.length).toFixed(4)
       console.log(`\x1b[32m%s\x1b[0m`, `Avg: ${avgPrice}ETH`)
       // 判断均价是否超过预定值 
       let now = await getDate()
@@ -101,24 +106,24 @@ const osSellEvent = async (slug) => {
       console.log(`diff:${diff_time}---avgPrice:${avgPrice}---alertPrice:${alertPrice}`)
 
       if (avgPrice > alertPrice && diff_time >= 60) {
-        let int = parseInt(alertTimes / 3);
-        alertPrice = ((int + 1) * gearsPrice).toFixed(4);
+        lastAlertDate = await getDate();
+        let gears = parseInt(alertTimes / 3) + 1;
+        alertPrice = (gears * gearsPrice).toFixed(4);
         console.log(`\x1b[32m%s\x1b[0m`, `AlertPrice: ${alertPrice}ETH`);
         alertTimes += 1
-        let message = `[flipAlertBot] \n第${alertTimes}次预警 \n${slug}最近五笔成交均价已经达到${avgPrice}ETH \n${lastFivePriceList[0]}ETH \n${lastFivePriceList[1]}ETH \n${lastFivePriceList[2]}ETH \n${lastFivePriceList[3]}ETH \n${lastFivePriceList[4]}ETH`
+        let message = `[flipAlertBot] \n第${alertTimes}次预警 \n${slug}的成交均价${avgPrice}ETH触发第${gears}档预警 \n最近五笔成交\n${lastFivePriceList[0]}ETH \n${lastFivePriceList[1]}ETH \n${lastFivePriceList[2]}ETH \n${lastFivePriceList[3]}ETH \n${lastFivePriceList[4]}ETH`
         console.log(message);
         await bark("flipAlertBot", `${avgPrice}ETH`)
-        await dc(message);
-        lastAlertDate = await getDate();
+        await dc(message);        
       } 
       else if (avgPrice > reactivatePrice && diff_time > 14400) {
         reactivateAlertTimes += 1
         if (reactivateAlertTimes >= 5) {
+          global.lastAlertDate = await getDate();
           let message = `[flipAlertBot] \n复活预警 \n${slug}最近五笔成交均价为${avgPrice}ETH \n${lastFivePriceList[0]}ETH \n${lastFivePriceList[1]}ETH \n${lastFivePriceList[2]}ETH \n${lastFivePriceList[3]}ETH \n${lastFivePriceList[4]}ETH`
           console.log(message);
           await dc(message);
-          await bark("flipAlertBot", `${slug} ${avgPrice}ETH`)
-          global.lastAlertDate = await getDate();
+          await bark("flipAlertBot", `${slug} ${avgPrice}ETH`)         
         }
       }
     } 

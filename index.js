@@ -5,21 +5,20 @@ const logWhaleAddress = whaleAddress.map(address => `0x000000000000000000000000$
 const { createAlchemyWeb3 } = require("@alch/alchemy-web3")
 const API_URL = `wss://eth-mainnet.alchemyapi.io/v2/${config.alchemyKey}`
 const web3 = createAlchemyWeb3(API_URL)
-
+const { Webhook } = require('discord-webhook-node');
+const DC_URL = config.discordKey;
 const hook = new Webhook(DC_URL);
 const axios = require("axios")
 const fork = require('child_process').fork;
-const { Webhook } = require('discord-webhook-node');
 const fs = require('fs');
 const path = require('path');
 const readline  = require('readline');
 const moment = require("moment");
 
 const openseaKey = config.openseaKey;
-const DC_URL = config.discordKey;
 const BARK_URL = `https://api.day.app/${config.barkKey}/`
 const BARK_FLAG = config.barkFlag;
-const DC_FLAG = config.discordFlag;
+const DC_FLAG = config.dcFlag;
 
 let contractHistory = []
 
