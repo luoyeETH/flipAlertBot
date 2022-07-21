@@ -8,9 +8,11 @@ const moment = require("moment")
 const { Webhook } = require('discord-webhook-node');
 const hook = new Webhook(DC_URL)
 const axios = require("axios")
-const BARK_URL = `https://api.day.app/${config.barkKey}/`
+const BARK_URL = `https://api.day.app/${config.barkKey}/`;
+const DING_URL = `https://oapi.dingtalk.com/robot/send?access_token=${config.dingdingKey}`;
 const BARK_FLAG = config.barkFlag;
 const DC_FLAG = config.dcFlag;
+const DING_FLAG = config.dingFlag;
 
 global.lastFivePriceList = []
 global.lastAlertDate = 0
@@ -30,6 +32,17 @@ async function bark(title, message) {
 async function dc(message) {
   if (DC_FLAG) {
     await hook.send(message);
+  }
+}
+async function ding(message) {
+  if (DING_FLAG) {
+    console.log(message);
+    await axios.post(DING_URL, {
+        msgtype: "text",
+        text: {
+            "content": message
+        },
+    });
   }
 }
 
@@ -106,7 +119,7 @@ const osSellEvent = async (slug) => {
       console.log(`diff:${diff_time}---avgPrice:${avgPrice}---alertPrice:${alertPrice}`)
 
       if (avgPrice > alertPrice && diff_time >= 60) {
-        lastAlertDate = await getDate();
+        lastAlertDate = now;
         let gears = parseInt(alertTimes / 3) + 1;
         alertPrice = (gears * gearsPrice).toFixed(4);
         console.log(`\x1b[32m%s\x1b[0m`, `AlertPrice: ${alertPrice}ETH`);
@@ -114,7 +127,8 @@ const osSellEvent = async (slug) => {
         let message = `[flipAlertBot] \n第${alertTimes}次预警 \n${slug}的成交均价${avgPrice}ETH触发第${gears}档预警 \n最近五笔成交\n${lastFivePriceList[0]}ETH \n${lastFivePriceList[1]}ETH \n${lastFivePriceList[2]}ETH \n${lastFivePriceList[3]}ETH \n${lastFivePriceList[4]}ETH`
         console.log(message);
         await bark("flipAlertBot", `${avgPrice}ETH`)
-        await dc(message);        
+        await dc(message);
+        await ding(message); 
       } 
       else if (avgPrice > reactivatePrice && diff_time > 14400) {
         reactivateAlertTimes += 1
@@ -123,7 +137,8 @@ const osSellEvent = async (slug) => {
           let message = `[flipAlertBot] \n复活预警 \n${slug}最近五笔成交均价为${avgPrice}ETH \n${lastFivePriceList[0]}ETH \n${lastFivePriceList[1]}ETH \n${lastFivePriceList[2]}ETH \n${lastFivePriceList[3]}ETH \n${lastFivePriceList[4]}ETH`
           console.log(message);
           await dc(message);
-          await bark("flipAlertBot", `${slug} ${avgPrice}ETH`)         
+          await bark("flipAlertBot", `${slug} ${avgPrice}ETH`);
+          await ding(message);         
         }
       }
     } 

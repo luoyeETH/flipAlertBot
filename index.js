@@ -16,9 +16,11 @@ const readline  = require('readline');
 const moment = require("moment");
 
 const openseaKey = config.openseaKey;
-const BARK_URL = `https://api.day.app/${config.barkKey}/`
+const BARK_URL = `https://api.day.app/${config.barkKey}/`;
+const DING_URL = `https://oapi.dingtalk.com/robot/send?access_token=${config.dingdingKey}`;
 const BARK_FLAG = config.barkFlag;
 const DC_FLAG = config.dcFlag;
+const DING_FLAG = config.dingFlag;
 
 let contractHistory = []
 
@@ -34,6 +36,18 @@ async function bark(title, message) {
 async function dc(message) {
   if (DC_FLAG) {
     await hook.send(message);
+  }
+}
+
+async function ding(message) {
+  if (DING_FLAG) {
+    console.log(message);
+    await axios.post(DING_URL, {
+        msgtype: "text",
+        text: {
+            "content": message
+        },
+    });
   }
 }
 
@@ -113,6 +127,7 @@ const initApp = async () => {
       let startMessage = `[flipAlertBot] \n${date} 开始监控 ${slug} \n合约地址: ${contract}`;
       console.log(startMessage);
       await dc(startMessage);
+      await ding(startMessage);
       await bark("start", startMessage);
       let child = fork('./app.js', [slug]);
       console.log('fork return pid: ' + child.pid);
@@ -130,6 +145,7 @@ const startApp = async (contract) => {
   catch (error) {
     console.log(`error: ${error}`);
     await dc(`[flipAlertBot] \nerror: ${error}`);
+    await ding(`error: ${error}`);
     await bark("error", `error: ${error}`);
   }
 
@@ -138,6 +154,7 @@ const startApp = async (contract) => {
   let startMessage = `[flipAlertBot] \n${date} 开始监控 ${slug} \n合约地址: ${contract}`;
   console.log(startMessage);
   await dc(startMessage);
+  await ding(startMessage);
   await bark("start", startMessage);
   let child = fork('./app.js', [slug]);
   console.log('fork return pid: ' + child.pid);
