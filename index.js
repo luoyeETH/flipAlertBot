@@ -57,13 +57,10 @@ const getDate = async () => {
   return date
 }
 
-//计算时间差
-const getTimeDiff = async (startTime, endTime) => {
-  let start = moment(startTime, "YYYY-MM-DD HH:mm:ss");
-  let end = moment(endTime, "YYYY-MM-DD HH:mm:ss");
-  let diff = start.diff(end, 'seconds')
-  return diff
-}
+// 休眠函数
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(() => resolve(), ms));
+};
 
 // 写入文件
 const writeToFile = async (fileName, data) => {
@@ -98,6 +95,27 @@ const readFromFile = async (fileName) => {
     });
 }
 
+// 删除文件指定行
+const deleteLine = async (fileName, msg) => {
+  let str = path.join(__dirname, fileName);
+  fs.readFile(str, 'utf8', function (err, data) {
+    if (err) {
+      throw new Error("读取文件失败")
+    } else {
+      let dataArr = data.split('\n');
+      dataArr = dataArr.map(item => item.replace(/\r/g, ''));
+      let newData = dataArr.filter(item => item !== msg);
+      fs.writeFile(str, newData.join('\n'), 'utf8', function (err) {
+        if (err) {
+          throw new Error("写入文件失败")
+        } else {
+          console.log("写入文件成功")
+        }
+      });
+    }
+  });
+}
+
 // 通过openseaKey获取合约地址对应的slug
 const getSlugFromContract = async (asset_contract) => {
   const options = {
@@ -115,7 +133,6 @@ const getSlugFromContract = async (asset_contract) => {
 // 初始化os监控程序 适用于断线重连
 const initApp = async () => {
   let slugList = await readFromFile('slug.txt');
-  let contractList = await readFromFile('contract.txt');
   if (slugList.length === 0) {
     console.log("slug数组为空");
     return;
@@ -123,21 +140,29 @@ const initApp = async () => {
     for (let i = 0; i < slugList.length; i++) {
       let date = await getDate();
       let slug = slugList[i];
-      let contract = contractList[i];
-      let startMessage = `[flipAlertBot] \n${date} 开始监控 ${slug} \n合约地址: ${contract}`;
+      let startMessage = `[flipAlertBot]初始化 \n${date} 开始监控 ${slug}`;
       console.log(startMessage);
       await dc(startMessage);
       await ding(startMessage);
       await bark("start", startMessage);
       let child = fork('./app.js', [slug]);
       console.log('fork return pid: ' + child.pid);
+      child.on('message', (msg) => {
+        // 从slug.txt中删除msg所在行
+        deleteLine('slug.txt', msg);
+      });
+      child.on('exit', function (code) {
+        console.log('child process exited with ' + `code ${code}`);
+      });
+      child.on('error', function (err) {
+        console.log('child process error: ' + err);
+      });
     }
   }
 }
 
 // 开启新的监控程序
 const startApp = async (contract) => {
-  await writeToFile('contract.txt', contract + '\n');
   let slug
   try {
     slug = await getSlugFromContract(contract);
@@ -148,7 +173,6 @@ const startApp = async (contract) => {
     await ding(`error: ${error}`);
     await bark("error", `error: ${error}`);
   }
-
   await writeToFile('slug.txt', slug + '\n');
   let date = await getDate();
   let startMessage = `[flipAlertBot] \n${date} 开始监控 ${slug} \n合约地址: ${contract}`;
@@ -158,6 +182,14 @@ const startApp = async (contract) => {
   await bark("start", startMessage);
   let child = fork('./app.js', [slug]);
   console.log('fork return pid: ' + child.pid);
+  child.on('message', (msg) => {
+    // 从slug.txt中删除msg所在行
+    deleteLine('slug.txt', msg);
+  })
+  child.on('exit', function (code) {
+    console.log('child process exited with ' + `code ${code}`);
+    await 
+  });
 }
 
 initApp();

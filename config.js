@@ -10,4 +10,9 @@ module.exports = {
     barkFlag: false, // 是否推送到bark
     dcFlag: false, // 是否推送到discord
     dingFlag: false, // 是否推送到钉钉
+    publicKey: [
+        "0x0000000000000000000000000000000000000000", // 要查询NFT库存的账户列表
+        "0x1111111111111111111111111111111111111111", 
+    ],
+
 }

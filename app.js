@@ -8,6 +8,7 @@ const moment = require("moment")
 const { Webhook } = require('discord-webhook-node');
 const hook = new Webhook(DC_URL)
 const axios = require("axios")
+const fork = require('child_process').fork;
 const BARK_URL = `https://api.day.app/${config.barkKey}/`;
 const DING_URL = `https://oapi.dingtalk.com/robot/send?access_token=${config.dingdingKey}`;
 const BARK_FLAG = config.barkFlag;
@@ -18,6 +19,7 @@ global.lastFivePriceList = []
 global.lastAlertDate = 0
 global.alertTimes = 0
 global.reactivateAlertTimes = 0
+global.assetContract = "";
 global.alertPrice = config.alertPrice;
 global.gearsPrice = config.gearsPrice;
 global.reactivatePrice = config.reactivatePrice;
@@ -72,6 +74,43 @@ const getAlertPriceFromArgs = async (args) => {
   return alertPrice;
 }
 
+const getContractFromSlug = async (slug) => {
+  const options = {
+    method: 'GET',
+    url: 'https://api.opensea.io/api/v1/collection/' + slug,
+    headers: {'X-API-KEY': openseaKey}
+  };
+  let response = await axios.request(options)
+  let jsonData = response.data;
+  let asset_contract = jsonData.collection.primary_asset_contracts[0].address;
+  return asset_contract;
+}
+
+const getNftBalance = async (contract) => {
+  let nftBalance = 0;
+  let child = fork('./checkNFT.js', [contract]);
+  console.log('fork return pid: ' + child.pid);
+  child.on('message', (msg) => {
+    nftBalance = msg;
+  });
+  child.on('exit', (code) => {
+    console.log('checkNFT child process exited with ' + code);
+  });
+  return nftBalance;
+}
+
+const checkStatus = async (slug) => {
+  let nftBalance = await getNftBalance(assetContract);
+  if (nftBalance == 0) {
+    let date = await getDate();
+    await bark("停止监控", slug);
+    await dc(`${date} ${slug}全部库存已售空 停止监控`);
+    await ding(`${date} ${slug}全部库存已售空 停止监控`);
+    process.send(slug);
+    process.exit(0);
+  }
+  console.log(`${slug} 库存: ${nftBalance}`);
+}
 
 const osSellEvent = async (slug) => {
   const client = new OpenSeaStreamClient({
@@ -128,7 +167,8 @@ const osSellEvent = async (slug) => {
         console.log(message);
         await bark("flipAlertBot", `${avgPrice}ETH`)
         await dc(message);
-        await ding(message); 
+        await ding(message);
+        checkStatus(slug); 
       } 
       else if (avgPrice > reactivatePrice && diff_time > 14400) {
         reactivateAlertTimes += 1
@@ -138,7 +178,8 @@ const osSellEvent = async (slug) => {
           console.log(message);
           await dc(message);
           await bark("flipAlertBot", `${slug} ${avgPrice}ETH`);
-          await ding(message);         
+          await ding(message);
+          checkStatus(slug);
         }
       }
     } 
@@ -168,6 +209,7 @@ const main = async () => {
   } else {
     slug = await getSlugFromArgs();
   }
+  assetContract = await getContractFromSlug(slug);
   await osSellEvent(slug);
 }
 
