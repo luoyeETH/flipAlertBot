@@ -38,7 +38,6 @@ async function dc(message) {
 }
 async function ding(message) {
   if (DING_FLAG) {
-    console.log(message);
     await axios.post(DING_URL, {
         msgtype: "text",
         text: {
@@ -80,7 +79,11 @@ const getContractFromSlug = async (slug) => {
     url: 'https://api.opensea.io/api/v1/collection/' + slug,
     headers: {'X-API-KEY': openseaKey}
   };
-  let response = await axios.request(options)
+  let response = await axios.request(options).catch(err => {
+    console.log(err);
+    process.send("通过slug获取contract失败");
+    process.exit(0);
+  });
   let jsonData = response.data;
   let asset_contract = jsonData.collection.primary_asset_contracts[0].address;
   return asset_contract;
@@ -110,8 +113,8 @@ const checkStatus = async (slug) => {
   if (nftBalance == 0) {
     let date = await getDate();
     await bark("停止监控", slug);
-    await dc(`${date} ${slug}全部库存已售空 停止监控`);
-    await ding(`${date} ${slug}全部库存已售空 停止监控`);
+    await dc(`[flipAlertBot]\n${date} ${slug}全部库存已售空 停止监控`);
+    await ding(`[flipAlertBot]\n${date} ${slug}全部库存已售空 停止监控`);
     process.send(slug);
     process.exit(0);
   }

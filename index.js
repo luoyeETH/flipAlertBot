@@ -41,7 +41,6 @@ async function dc(message) {
 
 async function ding(message) {
   if (DING_FLAG) {
-    console.log(message);
     await axios.post(DING_URL, {
         msgtype: "text",
         text: {
@@ -154,6 +153,7 @@ const initApp = async () => {
       });
       child.on('exit', function (code) {
         console.log(`init child process ${child.pid} exited with code ${code}`);
+        console.log(`进程 ${slug}监控 已结束`);
       });
       child.on('error', function (err) {
         console.log('child process error: ' + err);
