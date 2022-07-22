@@ -94,13 +94,19 @@ const getNftBalance = async (contract) => {
     nftBalance = msg;
   });
   child.on('exit', (code) => {
-    console.log('checkNFT child process exited with ' + code);
+    console.log(`checkNFT child process ${child.pid} exited with ${code}`);
   });
+  // 阻塞 等待子进程结束
+  await new Promise((resolve) => {
+    child.on('exit', resolve);
+  }
+  );
   return nftBalance;
 }
 
 const checkStatus = async (slug) => {
   let nftBalance = await getNftBalance(assetContract);
+  console.log(`${slug} nftBalance: ${nftBalance}`);
   if (nftBalance == 0) {
     let date = await getDate();
     await bark("停止监控", slug);
@@ -109,7 +115,6 @@ const checkStatus = async (slug) => {
     process.send(slug);
     process.exit(0);
   }
-  console.log(`${slug} 库存: ${nftBalance}`);
 }
 
 const osSellEvent = async (slug) => {

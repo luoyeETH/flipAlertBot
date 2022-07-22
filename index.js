@@ -143,6 +143,7 @@ const initApp = async () => {
       let startMessage = `[flipAlertBot]初始化 \n${date} 开始监控 ${slug}`;
       console.log(startMessage);
       await dc(startMessage);
+      await sleep(5000);
       await ding(startMessage);
       await bark("start", startMessage);
       let child = fork('./app.js', [slug]);
@@ -152,7 +153,7 @@ const initApp = async () => {
         deleteLine('slug.txt', msg);
       });
       child.on('exit', function (code) {
-        console.log('child process exited with ' + `code ${code}`);
+        console.log(`init child process ${child.pid} exited with code ${code}`);
       });
       child.on('error', function (err) {
         console.log('child process error: ' + err);
@@ -187,8 +188,7 @@ const startApp = async (contract) => {
     deleteLine('slug.txt', msg);
   })
   child.on('exit', function (code) {
-    console.log('child process exited with ' + `code ${code}`);
-    await 
+    console.log(`child process ${child.pid} exited with code ${code}`);
   });
 }
 
@@ -200,8 +200,7 @@ const filter = {
 }
 const setNftContract = (tx) => {
   if(contractHistory.includes(tx.to) === false) {
-    contractHistory.push(tx.to)
-    console.log(tx)
+    contractHistory.push(tx.to);
     startApp(tx.to);
   }
 }
