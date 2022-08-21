@@ -167,7 +167,7 @@ const osSellEvent = async (slug) => {
 
       if (avgPrice > alertPrice && diff_time >= 60) {
         lastAlertDate = now;
-        let gears = parseInt(alertTimes / 3) + 1;
+        let gears = parseInt(alertTimes + 1 / 3) + 1;
         alertPrice = (gears * gearsPrice).toFixed(4);
         console.log(`\x1b[32m%s\x1b[0m`, `AlertPrice: ${alertPrice}ETH`);
         alertTimes += 1
@@ -182,6 +182,7 @@ const osSellEvent = async (slug) => {
         reactivateAlertTimes += 1
         if (reactivateAlertTimes >= 5) {
           global.lastAlertDate = await getDate();
+          reactivatePrice = avgPrice
           let message = `[flipAlertBot] \n复活预警 \n${slug}最近五笔成交均价为${avgPrice}ETH \n${lastFivePriceList[0]}ETH \n${lastFivePriceList[1]}ETH \n${lastFivePriceList[2]}ETH \n${lastFivePriceList[3]}ETH \n${lastFivePriceList[4]}ETH`
           console.log(message);
           await dc(message);
