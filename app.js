@@ -167,7 +167,7 @@ const osSellEvent = async (slug) => {
 
       if (avgPrice > alertPrice && diff_time >= 60) {
         lastAlertDate = now;
-        let gears = parseInt(alertTimes + 1 / 3) + 1;
+        let gears = parseInt((alertTimes + 1) / 3) + 1;
         alertPrice = (gears * gearsPrice).toFixed(4);
         console.log(`\x1b[32m%s\x1b[0m`, `AlertPrice: ${alertPrice}ETH`);
         alertTimes += 1
